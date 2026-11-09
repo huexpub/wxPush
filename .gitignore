@@ -1,0 +1,21 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+.pytest_cache/
+
+# 运行时数据（sqlite / secret.key）
+data/
+
+# 前端
+web/node_modules/
+web/dist/
+# 构建产物由 CI 生成，不放仓库
+wxpush/static/assets/
+wxpush/static/index.html
+
+# 部署密钥
+/.env
+/.env.local

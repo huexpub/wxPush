@@ -1,0 +1,44 @@
+services:
+  wxpush:
+    # GitHub 上构建好的镜像；本地改代码时 `docker compose build` 会覆盖同名 tag
+    image: ghcr.io/huexpub/wxpush:latest
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      WXPUSH_HOST: 0.0.0.0
+      WXPUSH_PORT: 8000
+      WXPUSH_DATA_DIR: /app/data
+      # 对外地址（含子路径前缀），用于生成给调用方的示例
+      WXPUSH_BASE_URL: ${WXPUSH_BASE_URL:-}
+      # 挂载前缀：留空 = 根；填 wxpush = 整个服务住进 /wxpush
+      WXPUSH_PATH_PREFIX: ${WXPUSH_PATH_PREFIX:-}
+      # 管理员闸门：公网部署必须设
+      WXPUSH_ADMIN_USER: ${WXPUSH_ADMIN_USER:-}
+      WXPUSH_ADMIN_PASSWORD: ${WXPUSH_ADMIN_PASSWORD:-}
+      # 加密密钥：留空则用 data/secret.key 自动生成（没有它就解不开已存的 secret）
+      WXPUSH_ENCRYPTION_KEY: ${WXPUSH_ENCRYPTION_KEY:-}
+      # 页脚（支持 HTML）
+      WXPUSH_FOOTER_HTML: ${WXPUSH_FOOTER_HTML:-}
+      # 消息历史保留天数；0 = 永久
+      WXPUSH_MESSAGE_RETENTION_DAYS: ${WXPUSH_MESSAGE_RETENTION_DAYS:-180}
+      # 内置清理任务间隔（秒），默认一天
+      WXPUSH_PURGE_INTERVAL_SECONDS: ${WXPUSH_PURGE_INTERVAL_SECONDS:-86400}
+      # 每个 webhook key 每分钟调用上限
+      WXPUSH_RATE_LIMIT_PER_MINUTE: ${WXPUSH_RATE_LIMIT_PER_MINUTE:-120}
+    volumes:
+      - wxpush-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import os,urllib.request;p=os.environ.get('WXPUSH_PATH_PREFIX','').strip('/');urllib.request.urlopen('http://127.0.0.1:8000'+('/'+p if p else '')+'/api/healthz')"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  wxpush-data:
